@@ -90,7 +90,7 @@ Report/                    assemble_report (deterministic tables), run_report (w
 
 - A SLURM cluster with conda. Heavy stages are submitted as jobs; the STORM fit
   and the transport tables use one GPU.
-- An Anthropic or OpenAI API key for the agent stages (`domain_panel`, `target_panel`,
+- An Anthropic key for the agent stages (`domain_panel`, `target_panel`,
   `report`). Everything else is free to run.
 - Outbound HTTPS from the nodes that run the stages (STRING, Enrichr,
   CellTypist and Allen reference downloads, UniProt, PubMed, the LLM API).
