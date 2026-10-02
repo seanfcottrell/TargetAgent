@@ -1,0 +1,89 @@
+# Data card: the ONLY description of this dataset that the pipeline receives.
+#
+# Everything an agent is told about the data is rendered from this file or
+# computed from the data itself. Findings, interpretations of programmes or
+# domains, and typed-in statistics do not belong here: QC statistics are
+# computed by the pipeline and reach the agents inside packets.
+#
+# Sections that are not listed are not part of the dataset.
+
+dataset: ad_pfc_stereoseq
+
+description:
+  tissue: human dorsolateral prefrontal cortex, post-mortem
+  technology: >-
+    Stereo-seq spatial transcriptomics. Nuclei are segmented from the ssDNA
+    stain and their transcripts counted (cellbin); the tissue is also binned
+    into square bin110 tiles (55 um).
+  measurement: nuclear transcripts (segmented nuclei)
+  disease: Alzheimer's disease
+  design: one tissue section per donor; the donor section is the unit of replication
+  # How the disease is laid out in tissue (user prior). focal: discrete affected
+  # regions (e.g. a tumour and the tissue around it), so comparisons within the
+  # diseased sections are disease comparisons. diffuse: the disease acts across the
+  # tissue, so disease is read between case and control donors.
+  presentation: diffuse
+  presentation_note: >-
+    In the absence of plaque annotations, we consider the Alzheimer's disease effect
+    as being diffuse across the cortex rather than as a localized lesion.
+
+condition:
+  column: stage
+  control_label: "NA"        # a literal string, not a missing value: read with keep_default_na=False
+  control_group: CTRL
+  case_group: AD
+  stage_order: ["NA", "moderate"]
+
+# Per-section metadata. chip_lot and gef_writer are batch identifiers.
+# age is a five-year band; apoe "unknown" where it was not reported.
+samples:
+  - {section: AD1,   chip: B02009F6, stage: moderate, chip_lot: B02009, gef_writer: S64_i4, sex: M, age: 91-95, apoe: E3/E4,   thal: 3, cerad: 3, braak: 4}
+  - {section: AD2,   chip: B02008D2, stage: moderate, chip_lot: B02008, gef_writer: S64_i4, sex: M, age: 76-80, apoe: E3/E4,   thal: 5, cerad: 3, braak: 6}
+  - {section: AD6,   chip: B01809C2, stage: moderate, chip_lot: B01809, gef_writer: S32_u4, sex: M, age: 66-70, apoe: E4/E4,   thal: 5, cerad: 3, braak: 6}
+  - {section: CTRL1, chip: B01806B6, stage: "NA",     chip_lot: B01806, gef_writer: S32_u4, sex: M, age: 76-80, apoe: E3/E2,   thal: 0, cerad: 0, braak: 2}
+  - {section: CTRL2, chip: D02175A4, stage: "NA",     chip_lot: D02175, gef_writer: S32_u4, sex: M, age: 81-85, apoe: E3/E3,   thal: 2, cerad: 0, braak: 2}
+  - {section: CTRL3, chip: B01809A4, stage: "NA",     chip_lot: B01809, gef_writer: S32_u4, sex: M, age: 71-75, apoe: E3/E2,   thal: 4, cerad: 0, braak: 2}
+  - {section: CTRL4, chip: B01809A3, stage: "NA",     chip_lot: B01809, gef_writer: S32_u4, sex: M, age: 91-95, apoe: unknown, thal: 3, cerad: 1, braak: 2}
+  - {section: CTRL5, chip: D02175A6, stage: "NA",     chip_lot: D02175, gef_writer: S32_u4, sex: M, age: 86-90, apoe: unknown, thal: 0, cerad: 0, braak: 3}
+  - {section: CTRL6, chip: B01806B5, stage: "NA",     chip_lot: B01806, gef_writer: S32_u4, sex: M, age: 91-95, apoe: E3/E3,   thal: 0, cerad: 0, braak: 2}
+
+# Converted per-section inputs (format conversion only, no QC or selection).
+# Paths are relative to the repository root.
+inputs:
+  cellbin_dir: data/ad_pfc_stereoseq/cellbin   # <section>_cellbin.h5ad   (build_cellbin.py)
+  bin_dir: data/ad_pfc_stereoseq/bin110        # <section>_bin110.h5ad    (build_bin110.py)
+  gef_dir: data/ad_pfc_stereoseq/gse269906     # *_<chip>.cellbin.gef, read for nuclear morphology
+
+# Cross-section links of the STORM graph, chosen by the user from chip lots.
+# kind "cross" joins a case section to a control section.
+storm_links:
+  - {src: CTRL4, dst: AD6,   kind: cross,  lot_matched: true}
+  - {src: AD6,   dst: AD2,   kind: within, lot_matched: false}
+  - {src: AD1,   dst: AD2,   kind: within, lot_matched: false}
+  - {src: CTRL1, dst: CTRL4, kind: within, lot_matched: false}
+  - {src: CTRL2, dst: CTRL4, kind: within, lot_matched: false}
+  - {src: CTRL3, dst: CTRL4, kind: within, lot_matched: true}
+  - {src: CTRL5, dst: CTRL4, kind: within, lot_matched: false}
+  - {src: CTRL6, dst: CTRL4, kind: within, lot_matched: false}
+
+priors:
+  # Target number of spatial domains; the clustering resolution is searched to hit it.
+  n_domains: 7
+  # Cell types expected in the tissue, with marker genes from a dataset lookup
+  # (first marker of each type from Mathys et al. 2019; the rest corroborating).
+  cell_types:
+    Ex:  {label: excitatory neurons,               markers: [SNAP25, SLC17A7, SATB2, CAMK2A]}
+    Inh: {label: inhibitory neurons,               markers: [GAD1, GAD2, SLC32A1]}
+    Ast: {label: astrocytes,                       markers: [AQP4, GFAP, SLC1A2, ALDH1L1]}
+    Oli: {label: oligodendrocytes,                 markers: [MBP, PLP1, MOBP, ST18]}
+    Opc: {label: oligodendrocyte precursor cells,  markers: [LHFPL3, PDGFRA, VCAN, PTPRZ1]}
+    Mic: {label: microglia and other immune cells, markers: [CD74, CX3CR1, P2RY12, CSF1R, PTPRC]}
+    End: {label: endothelial and vascular cells,   markers: [CLDN5, FLT1, PECAM1, VWF, PDGFRB]}
+  # Regex map from reference-model labels (CellTypist, Allen) onto the names above.
+  reference_label_map: coarse_map.csv
+
+# Rules every agent is given.
+policies:
+  - >-
+    Do not search for, read or use the publication that produced this dataset.
+    Literature checks concern genes, pathways and processes, not this cohort.

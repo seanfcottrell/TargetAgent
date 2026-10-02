@@ -1,0 +1,13 @@
+# secrets
+agents/common/.env
+.env
+# per-dataset data, run outputs, shared references and API caches (large, regenerable or downloaded)
+/data
+/runs
+/reference
+/cache
+# python
+__pycache__/
+*.pyc
+# job scripts
+jobs/

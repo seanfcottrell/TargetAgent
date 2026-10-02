@@ -1,0 +1,92 @@
+# Method defaults, shared by every dataset. A data card never overrides these;
+# a different method is a different methods file (run_all.py --methods).
+#
+# Nothing here is a finding. Each value is a stated choice of method.
+
+envs:                     # conda env per stage group (README "Environments"); run via `conda run`
+  conda: conda              # a path, or a name on PATH; if neither resolves, $CONDA_EXE is used
+  storm: st-graph-parafac2-gpu
+  deg: deg-calib            # the only env with gudhi (sheaf) and R/NEBULA
+  agents: st-graph-parafac2-gpu
+
+slurm:                    # the runner's own job, and per-stage resources
+  driver: {time: "72:00:00", cpus: 8, mem: 64G}
+  prep: {time: "03:00:00", cpus: 4, mem: 120G}
+  celltype: {time: "06:00:00", cpus: 8, mem: 120G}
+  domains: {time: "04:00:00", cpus: 8, mem: 96G}
+  transport: {time: "02:00:00", cpus: 8, mem: 96G, gpu: "a100:1"}
+  deg: {time: "16:00:00", cpus: 8, mem: 192G}
+  sheaf_rank: {time: "08:00:00", cpus: 16, mem: 96G}
+
+prep:
+  bin_size: 110
+  min_counts_per_bin: 50
+
+celltype:
+  min_genes_per_nucleus: 150
+  leiden_resolution: 1.0
+  celltypist_models: [Adult_Human_MTG, Adult_Human_PrefrontalCortex]   # first is primary
+
+storm:
+  rank: 10
+  gamma: 1.0
+  iters: 35
+  n_niches: 800
+  n_top_genes: 2000
+  gene_pool: coding              # HGNC protein-coding genes only
+  hvg_tiebreak: median_rank
+  within_graph: scc              # expression kNN UNION rook tile lattice
+  expr_k: 10
+  lambda_cross: 0.5
+  cluster_rep: QH
+  ppi_min_score: 700
+  string_version: "12.0"
+  resolutions: [0.3, 0.5, 0.6, 0.8]   # in-fit clustering only; domains come from the search below
+  # The graph build is CPU-only (per-sample PCA, kNN, FGW couplings) and takes
+  # hours; only the fit uses the GPU, for minutes. They are separate jobs, so the
+  # build starts at once on a CPU node and the fit reloads the saved graph in a
+  # short GPU slot. Save/load reproduces a single-job fit exactly.
+  slurm_graph: {time: "12:00:00", mem: 128G, cpus: 8, gpu: ""}
+  slurm_fit: {time: "01:00:00", mem: 128G, cpus: 8, gpu: "a100:1"}
+
+domains:
+  rep: QH                        # cluster on Q_k H (usage)
+  cluster_graph: scc             # exact kNN(10) on the embedding UNION rook lattice
+  grid: [0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0]
+  refine_steps: 10               # bisection steps if no grid point hits the target count
+  min_bins_per_domain_packet: 100
+  pool_min_boundary_share: 0.1   # adjacent pairs pooled into a pool packet: shared tile boundary >= this
+
+agents:
+  model: claude-opus-5
+  effort: high
+  max_tokens: 64000
+  domain_web_search: [factor]
+  # Every citation is machine-verified against the searches actually run
+  # (agents/common/citations.py), so a claim the budget cannot cover goes unsupported:
+  # budgets are sized for about one search per claim that sets a conclusion.
+  domain_max_searches: 20       # factor agent: every programme's mechanism, all domains, one call
+  target_batch: 25              # axis specialists (packet-only, no search)
+  direction_batch: 10
+  target_web_search: 12         # per direction call, i.e. ~1 search per candidate
+
+deg:
+  method: NEBULA                 # NB mixed model, donor random intercept, library-size offset
+  min_frac: 0.05
+  ncore: 8
+  depth_covariate: true          # per-section depth (centred log median counts/bin) in every contrast
+  hit_fdr: 0.05
+  hit_abs_log2fc: 1.0
+
+sheaf:
+  string_score: 400
+  top_nodes: 300
+  weight_transform: rank
+  n_scales: 20
+  topn: 40
+  workers: 16
+
+targets:
+  top_charge: 20
+  # data tiers select_targets.py admits; direction is carried as context and gates nothing
+  tiers_admitted: [convergent, single_axis_strong_mechanism]

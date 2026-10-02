@@ -1,0 +1,10 @@
+pattern,coarse,note
+(?i)^L\d,Ex,"layer-prefixed glutamatergic labels (L2-3 CUX2 ..., L2/3 IT, L5 ET, L5/6 NP, L6 CT, L6b, L6 IT Car3)"
+(?i)\bIT\b|\bET\b|\bNP\b|\bCT\b|L6b|^Exc\b|Excit|Glut,Ex,excitatory / glutamatergic
+(?i)^InN\b|^Inh\b|LAMP5|PAX6|VIP|SST|PVALB|SNCG|CHANDELIER|GABA|Interneuron,Inh,inhibitory / GABAergic
+(?i)Astro,Ast,astrocytes
+(?i)^Oligo(?!.*(OPC|precursor|progenitor)),Oli,mature oligodendrocytes
+(?i)^OPC(?![a-z])|^COP(?![a-z])|precursor|progenitor,Opc,"oligodendrocyte progenitors and committed precursors (no \b: labels like OPC_1 have an underscore, which is a word character)"
+(?i)Micro|PVM|Macro|Myeloid|Monocyte|Neutrophil|Lymph|immune|^T\b|^B\b|T cell|B cell,Mic,microglia and other immune cells
+(?i)Endo|VLMC|Peri|^PC\b|\bPC\b|SMC|Fibro|Vascular|Mural|Ependym|Choroid,End,endothelial / vascular / meningeal
+(?i)^RB\b|Erythro|Red blood,Other,red blood cells (not one of the prior cell types)
